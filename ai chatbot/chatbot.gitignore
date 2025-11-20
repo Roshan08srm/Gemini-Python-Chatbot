@@ -1,0 +1,28 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Python Caching and Build Artifacts
+__pycache__/
+*.pyc
+*.pyd
+*.egg-info/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE and Dependency Files (VS Code)
+.vscode/
+
+# ====================
+# SECRETS AND CONFIGS
+# ====================
+
+# Explicitly ignore files that might contain API keys (e.g., if you switched to loading from a file)
+config.ini
+.env
+secrets.json
+
+# If you were to store your API key in a file named "api_key.txt"
+api_key.txt

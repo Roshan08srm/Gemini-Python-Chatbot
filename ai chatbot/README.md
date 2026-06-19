@@ -6,6 +6,13 @@ Unlike simple chat logs, this project features a full **SQLite database backend*
 
 ---
 
+![App Interface Screenshot](screenshot.png)
+
+> [!NOTE]
+> This screenshot demonstrates the active multi-session sidebar switcher on the left and the premium dark-themed streaming response interface on the right.
+
+---
+
 ## ✨ Features
 
 * **🌌 Premium Dark Interface:** Custom HSL styling, gradient headers, sleek chat bubbles, and micro-animations for an outstanding user experience.

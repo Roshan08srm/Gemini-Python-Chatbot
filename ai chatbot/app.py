@@ -14,17 +14,16 @@ from database import (
     clear_all_db
 )
 
-# Initialize database schema
+
 init_db()
 
-# Set page config
+
 st.set_page_config(
     page_title="Gemini AI Space",
     page_icon="🌌",
     layout="centered"
 )
 
-# Premium UI CSS styling injection
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -108,13 +107,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Custom Title and Header
+
 st.markdown('<div class="gradient-header">Gemini AI Space</div>', unsafe_allow_html=True)
 st.markdown('<div class="subheader">A modern, state-of-the-art conversational interface powered by Gemini 2.5 Flash</div>', unsafe_allow_html=True)
 
 MODEL = "gemini-2.5-flash"
 
-# Initialize Gemini Client
+
 @st.cache_resource
 def get_client():
     return genai.Client()
@@ -126,32 +125,25 @@ except Exception as e:
     st.info("Please make sure you have set the `GEMINI_API_KEY` environment variable in your terminal.")
     st.stop()
 
-# --- CONVERSATION & SESSION MANAGEMENT ---
 
-# Fetch all saved sessions from the database
+
 sessions = get_all_sessions()
 
-# Handle current active session setting
 if "current_session_id" not in st.session_state:
     if sessions:
-        # Load the most recent session
         st.session_state.current_session_id = sessions[0]["id"]
     else:
-        # Create a default new session
         new_id = str(uuid.uuid4())
         create_session(new_id, "New Chat")
         st.session_state.current_session_id = new_id
-        # Re-fetch sessions list
         sessions = get_all_sessions()
 
-# Hydrate/Load active session message log and connect Gemini state
 if ("active_session_loaded" not in st.session_state or 
     st.session_state.active_session_loaded != st.session_state.current_session_id):
     
     st.session_state.messages = load_messages(st.session_state.current_session_id)
     st.session_state.active_session_loaded = st.session_state.current_session_id
     
-    # Map messages to GenAI SDK Content objects to seed the chat thread history
     try:
         history = []
         for msg in st.session_state.messages:
@@ -173,7 +165,6 @@ if ("active_session_loaded" not in st.session_state or
 with st.sidebar:
     st.markdown("### 🌌 Chat History")
     
-    # Create new chat session
     if st.button("➕ New Chat", use_container_width=True):
         new_id = str(uuid.uuid4())
         create_session(new_id, "New Chat")
@@ -186,7 +177,6 @@ with st.sidebar:
     st.write("---")
     st.markdown("**Recent Chats**")
     
-    # List active session buttons
     if not sessions:
         st.caption("No conversations yet.")
     else:
@@ -197,13 +187,11 @@ with st.sidebar:
             btn_label = f"💬 {sess['title']}" if is_active else f"📄 {sess['title']}"
             btn_type = "primary" if is_active else "secondary"
             
-            # Select active chat
             with col1:
                 if st.button(btn_label, key=f"select_{sess['id']}", use_container_width=True, type=btn_type):
                     st.session_state.current_session_id = sess["id"]
                     st.rerun()
             
-            # Delete chat thread
             with col2:
                 if st.button("🗑️", key=f"del_{sess['id']}", use_container_width=True):
                     delete_session(sess["id"])
@@ -216,7 +204,7 @@ with st.sidebar:
                     st.rerun()
                     
     st.write("---")
-    # Clean up all conversations
+
     if st.button("🚨 Clear All Conversations", use_container_width=True):
         clear_all_db()
         if "current_session_id" in st.session_state:
@@ -225,38 +213,36 @@ with st.sidebar:
             del st.session_state.active_session_loaded
         st.rerun()
 
-# --- MAIN CONVERSATION DISPLAY ---
 
-# Render historical messages
+
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Chat Input
+
 if prompt := st.chat_input("Say something to Gemini..."):
-    # Display user's question
+
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # Save user message to database and update state
+
     save_message(st.session_state.current_session_id, "user", prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Auto-rename new sessions on the first message
-    # Length of 1 means this is the first message block in the session
+
     first_turn = False
     if len(st.session_state.messages) == 1:
         first_turn = True
         title = prompt[:24] + "..." if len(prompt) > 24 else prompt
         update_session_title(st.session_state.current_session_id, title)
 
-    # Render assistant's response in stream mode
+
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
         
         try:
-            # Request response stream from Gemini
+
             response_stream = st.session_state.chat.send_message_stream(prompt)
             
             for chunk in response_stream:
@@ -271,10 +257,10 @@ if prompt := st.chat_input("Say something to Gemini..."):
             message_placeholder.markdown(error_msg)
             full_response = error_msg
             
-        # Save assistant message to database and update state
+
         save_message(st.session_state.current_session_id, "assistant", full_response)
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         
-        # Trigger a rerun after the first response completes to refresh the sidebar title
+
         if first_turn:
             st.rerun()

@@ -11,7 +11,7 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    # Create sessions table first
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS sessions (
             id TEXT PRIMARY KEY,
@@ -20,7 +20,7 @@ def init_db():
         )
     """)
     
-    # Create messages table (using the new schema with nullable session_id initially for migration)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,19 +32,17 @@ def init_db():
         )
     """)
     
-    # --- SCHEMA MIGRATION ---
-    # If the user has an existing database from the older version, the 'messages' table
-    # exists but lacks the 'session_id' column. We dynamically add it here.
+   
     try:
         cursor.execute("ALTER TABLE messages ADD COLUMN session_id TEXT;")
     except sqlite3.OperationalError:
-        # Column already exists, so no action is needed
+
         pass
         
-    # Ensure there is a default session to link any orphaned/migrated messages to
+
     cursor.execute("INSERT OR IGNORE INTO sessions (id, title) VALUES ('default', 'Previous Chat')")
     
-    # Set any NULL session_id fields to 'default'
+
     cursor.execute("UPDATE messages SET session_id = 'default' WHERE session_id IS NULL")
     
     conn.commit()
